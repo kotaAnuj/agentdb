@@ -18,8 +18,10 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import tempfile
 import shutil
+import streamlit as st
+import fitz  # PyMuPDF
 
-# Setup logging
+# Setup logging once
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -30,21 +32,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Constants
+# Updated Constants
 MAX_RETRIES = 3
 MAX_CHUNK_SIZE = 500
 DATABASE_PATH = "document_processing.db"
-API_KEY = "AIzaSyDpaOZq0jE6d4SdTpf1GyNk_lLkB75Kn_8"
+# Replace with your actual API key
+API_KEY = "your-google-palm-api-key"  
+BASE_URL = "https://generativelanguage.googleapis.com/v1/models"
 
 # Additional constants
 CHUNK_PROCESSING_THREADS = 4
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 SUPPORTED_FORMATS = {'.txt', '.csv', '.pdf'}
 
-# Initialize OpenAI client
+# Initialize OpenAI client with correct configuration
 client = OpenAI(
     api_key=API_KEY,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    base_url=BASE_URL
 )
 
 @contextmanager
@@ -121,8 +125,9 @@ def process_chunk_with_gemini(chunk: str) -> str:
     """Process chunk with retry mechanism using backoff decorator"""
     try:
         response = client.chat.completions.create(
-            model="gemini-1.5-flash",
-            n=1,
+            model="gemini-pro",
+            temperature=0.7,
+            max_tokens=1024,
             messages=[
                 {"role": "system", "content": "You are a helpful AI assistant tasked with analyzing text and generating reasoning."},
                 {"role": "user", "content": f"Analyze this text and generate CoT reasoning:\n{chunk}"}
@@ -357,29 +362,10 @@ def get_document_results(document_id: int) -> List[Dict[str, str]]:
             for row in results
         ]
 
-        
-        
-import streamlit as st
-import tempfile
-from datetime import datetime
-import os
-import logging
-
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
-
 def initialize_session_state():
     """Initialize session state variables"""
     if 'agent' not in st.session_state:
-        api_key = "AIzaSyDpaOZq0jE6d4SdTpf1GyNk_lLkB75Kn_8"
+        api_key = os.getenv("GOOGLE_PALM_API_KEY", "your-api-key-here")  # Use environment variable
         st.session_state.agent = DocumentAgent(api_key)
     
     if 'chat_history' not in st.session_state:
@@ -551,7 +537,7 @@ class DocumentAgent:
     def __init__(self, api_key: str):
         self.client = OpenAI(
             api_key=api_key,
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+            base_url=BASE_URL
         )
         setup_database()
         
