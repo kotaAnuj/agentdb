@@ -357,57 +357,6 @@ def get_document_results(document_id: int) -> List[Dict[str, str]]:
             for row in results
         ]
 
-if __name__ == "__main__":
-    setup_database()
-    
-    # Example usage with different file types
-    test_files = [
-        {
-            "path": "example.txt",
-            "title": "Text Document Analysis",
-            "author": "John Doe",
-            "date": "2024-01-20"
-        },
-        {
-            "path": "data.csv",
-            "title": "CSV Data Analysis",
-            "author": "Jane Smith",
-            "date": "2024-01-20"
-        },
-        {
-            "path": "document.pdf",
-            "title": "PDF Document Analysis",
-            "author": "Bob Johnson",
-            "date": "2024-01-20"
-        }
-    ]
-    
-    for file_info in test_files:
-        try:
-            if os.path.exists(file_info["path"]):
-                print(f"\nProcessing {file_info['path']}...")
-                result = process_document_from_file(
-                    file_info["path"],
-                    file_info["title"],
-                    file_info["author"],
-                    file_info["date"]
-                )
-                print(f"Processing Status: {json.dumps(result, indent=4)}")
-                
-                # Display results
-                results = get_document_results(result["id"])
-                print(f"\nProcessed Chunks for {file_info['path']}:")
-                for chunk in results[:2]:  # Show first 2 chunks as example
-                    print(f"\nChunk {chunk['chunk_index']}:")
-                    print(f"Content: {chunk['content'][:100]}...")
-                    print(f"Analysis: {chunk['result'][:100]}...")
-            else:
-                print(f"File not found: {file_info['path']}")
-        except Exception as e:
-            logger.error(f"Error processing {file_info['path']}: {str(e)}")
-            continue
-        
-        
         
         
 import streamlit as st
